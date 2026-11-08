@@ -1,86 +1,52 @@
 # CloudVault
-# Password Manager Application
 
-This is a simple password manager application built with Python and Tkinter, designed to securely store and manage passwords using encryption.
+Gestor de passwords web com encriptação no próprio dispositivo. O servidor guarda apenas dados cifrados.
 
-## Features
+## Como funciona
 
-- **Add Password:** Allows users to add passwords for various sites securely.
-- **Generate Password:** Provides a tool to generate strong passwords based on specified criteria.
-- **View Passwords:** Displays a list of saved passwords and allows filtering by site or user.
-- **Copy to Clipboard:** Enables copying decrypted passwords to the clipboard for easy use.
-- **Encryption:** Uses Fernet encryption from the cryptography library to encrypt passwords stored in the database.
+- A chave é derivada da master password com **Argon2id**, no browser.
+- Site, utilizador, password e notas são cifrados com **AES-256-GCM** antes de serem enviados.
+- A master password nunca sai do dispositivo. Se a perderes, só a **chave de recuperação** dá acesso ao cofre.
+- No **Supabase**, as políticas de Row Level Security limitam cada utilizador às suas próprias linhas.
 
-## Installation
+## Tecnologias
 
-1. **Clone the repository:**
+Next.js, TypeScript, Tailwind CSS, Supabase e Vitest.
+
+## Instalação
+
+1. Instala as dependências:
 
    ```bash
-   git clone https://github.com/your-username/password-manager.git
-   cd password-manager
+   npm install
    ```
 
-2. **Install dependencies:**
+2. Cria um projeto no Supabase e aplica a migração em `supabase/migrations`.
 
-Ensure you have Python installed. Install the required Python packages:
+3. Copia `.env.example` para `.env.local` e preenche o URL e a chave publicável do projeto.
 
+4. Inicia a aplicação em http://localhost:3000:
 
    ```bash
-   pip install -r requirements.txt
+   npm run dev
    ```
-- **Explanation:** This addition instructs users to install dependencies listed in the `requirements.txt` file using `pip`. It assumes you have a file named `requirements.txt` containing necessary Python packages.
 
-   ```bash
-   git clone https://github.com/your-username/password-manager.git
-   cd password-manager
-   ``` 
+## Comandos
 
-3. **Generate encryption key:**
+| Comando | Descrição |
+| --- | --- |
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm test` | Testes de encriptação e do gerador |
+| `npm run lint` | Lint |
 
-Run the encryption script to generate the encryption key file (key.key):
+## Estrutura
 
-```bash
-python encryption.py
-```
+- `src/lib/crypto`: encriptação e gerador de passwords
+- `src/lib/vault-api.ts`: acesso aos dados no Supabase
+- `src/components`: ecrãs da aplicação
+- `supabase/migrations`: esquema e políticas de acesso
 
-## Usage
-1. Run the application:
+## Autores
 
-```bash
-python encryption.py
-``` 
-
-```bash
-python database.py
-``` 
-
-- **Explanation:** First to load the encryption and database files
-
-```bash
-python main.py
-``` 
-
-2. **Authentication:**
-- On first launch, you will be prompted to enter set a master password (default is '123' for demonstration purposes).
-- Enter this master password to access the password manager.
-
-3. **Functionality:**
-- **Add Password:** Click "Add Password" to enter details for a new password.
-- **Generate Password:** Click "Generate Password" to create a strong password based on your preferences.
-- **View Passwords:** The main interface displays a list of saved passwords. Double-click an item to view details (authentication required).
-- **Search:** Use the search bar to filter passwords by site or username.
-
-## Technologies Used
-
-- **Python:** Core programming language.
-- **Tkinter:** Python's standard GUI library.
-- **SQLite:** Lightweight SQL database for storing passwords.
-- **cryptography:** Python library for encryption (used for password security).
-
-## Contributing
-
-Contributions are welcome! If you have suggestions, bug reports, or want to contribute code, please submit an issue or pull request.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+Ricardo Silva, Guillermo López de Arechavaleta e Saúl Sauca.
