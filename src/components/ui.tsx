@@ -58,7 +58,7 @@ export function Brand() {
   return (
     <span className="inline-flex items-center gap-2 font-display text-lg font-semibold tracking-tight">
       <LockKeyhole size={20} className="text-accent" aria-hidden />
-      CloudVault
+      Cofrio
     </span>
   );
 }

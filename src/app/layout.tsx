@@ -7,7 +7,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const display = Bricolage_Grotesque({ variable: "--font-display-face", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CloudVault",
+  title: "Cofrio",
   description: "Cofre de passwords encriptado no teu dispositivo.",
 };
 

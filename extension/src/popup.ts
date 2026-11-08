@@ -33,7 +33,7 @@ function show(...nodes: Node[]) {
 }
 
 function header(...actions: Node[]) {
-  return h("header", {}, h("span", { class: "brand" }, "CloudVault"), h("div", {}, ...actions));
+  return h("header", {}, h("span", { class: "brand" }, "Cofrio"), h("div", {}, ...actions));
 }
 
 function message(text: string) {
@@ -91,7 +91,7 @@ function credentialForm(options: {
 function signInView() {
   credentialForm({
     title: "Entrar",
-    intro: "Usa a mesma conta da app CloudVault.",
+    intro: "Usa a mesma conta da app Cofrio.",
     fields: [
       { name: "email", label: "Email", type: "email" },
       { name: "password", label: "Password da conta", type: "password" },
@@ -251,7 +251,7 @@ async function start() {
   if (!data.session) return signInView();
 
   const record = await fetchVaultRecord(data.session.user.id);
-  if (!record) return message("Cria primeiro o cofre na app CloudVault.");
+  if (!record) return message("Cria primeiro o cofre na app Cofrio.");
 
   const stored = await chrome.storage.session.get(SESSION_KEY);
   const rawKey = stored[SESSION_KEY] as string | undefined;

@@ -1,4 +1,4 @@
-# CloudVault
+# Cofrio
 
 Gestor de passwords com web app e extensão de browser. Tudo é encriptado no teu dispositivo, e o servidor guarda apenas dados cifrados.
 

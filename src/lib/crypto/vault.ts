@@ -33,6 +33,7 @@ export const DEFAULT_KDF: KdfParams = {
 
 const KEY_BYTES = 32;
 const IV_BYTES = 12;
+// These labels are bound into existing ciphertext: changing them makes every vault unreadable.
 const WRAP_MASTER = "cloudvault:wrap:master";
 const WRAP_RECOVERY = "cloudvault:wrap:recovery";
 
