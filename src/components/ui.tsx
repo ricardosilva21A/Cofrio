@@ -84,7 +84,7 @@ let clearTimer: ReturnType<typeof setTimeout> | undefined;
 const CLIPBOARD_CLEAR_MS = 30_000;
 
 /** Copies a value and wipes the clipboard after 30 seconds. */
-async function copySecret(value: string) {
+export async function copySecret(value: string) {
   await navigator.clipboard.writeText(value);
   clearTimeout(clearTimer);
   clearTimer = setTimeout(() => {
@@ -93,7 +93,11 @@ async function copySecret(value: string) {
   }, CLIPBOARD_CLEAR_MS);
 }
 
-export function CopyButton({ value, label }: { value: string; label: string }) {
+export function CopyButton({ value, label, icon }: {
+  value: string;
+  label: string;
+  icon?: ReactNode;
+}) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -106,7 +110,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
 
   return (
     <button type="button" onClick={copy} aria-label={label} title={label} className={iconButton}>
-      {copied ? <Check size={16} className="text-accent" /> : <Copy size={16} />}
+      {copied ? <Check size={16} className="text-accent" /> : (icon ?? <Copy size={16} />)}
     </button>
   );
 }

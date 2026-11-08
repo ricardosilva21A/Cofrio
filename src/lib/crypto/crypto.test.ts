@@ -4,6 +4,8 @@ import {
   createVault,
   decryptItem,
   encryptItem,
+  importVaultKey,
+  unlockToRawKey,
   resetMasterPassword,
   unlockWithMaster,
   unlockWithRecovery,
@@ -105,5 +107,15 @@ describe("generatePassword", () => {
         symbols: false,
       }),
     ).toThrow();
+  });
+});
+
+describe("extension key handling", () => {
+  it("round-trips the vault key through its raw form", async () => {
+    const { record, vaultKey } = await createVault("master", FAST_KDF);
+    const envelope = await encryptItem(vaultKey, "id-1", ITEM);
+    const restored = await importVaultKey(await unlockToRawKey("master", record));
+    await expect(decryptItem(restored, "id-1", envelope)).resolves.toEqual(ITEM);
+    await expect(unlockToRawKey("wrong", record)).rejects.toThrow();
   });
 });

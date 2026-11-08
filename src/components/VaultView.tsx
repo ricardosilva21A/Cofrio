@@ -1,26 +1,27 @@
 "use client";
 
-import { ArrowLeft, Eye, EyeOff, Lock, LogOut, Pencil, Plus, Search, Trash2, Wand2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ExternalLink, Eye, EyeOff, KeyRound, Lock, LogOut, Pencil, Plus, Search, Trash2, UserRound, Wand2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { matchesQuery, recognizeSite } from "@/lib/sites";
 import { deleteEntry, loadEntries, saveEntry, type Entry, type EntryData } from "@/lib/vault-api";
 import { EntryEditor } from "./EntryEditor";
 import { PasswordGenerator } from "./PasswordGenerator";
-import { Brand, CopyButton, ErrorText, iconButton, inputClass, primaryButton, secondaryButton } from "./ui";
+import { Brand, CopyButton, ErrorText, copySecret, iconButton, inputClass, primaryButton, secondaryButton } from "./ui";
 
 const IDLE_LOCK_MS = 5 * 60 * 1000;
-const TILE_HUES = [162, 28, 210, 340, 90, 262];
+const TOAST_MS = 2500;
 
 type Pane = { kind: "empty" } | { kind: "detail"; id: string } | { kind: "edit"; id: string | null };
 
 function Tile({ site }: { site: string }) {
-  const hash = [...site].reduce((total, char) => total + char.charCodeAt(0), 0);
+  const { name, hue } = recognizeSite(site);
   return (
     <span
       aria-hidden
-      style={{ background: `hsl(${TILE_HUES[hash % TILE_HUES.length]} 45% 38%)` }}
+      style={{ background: `hsl(${hue} 45% 38%)` }}
       className="flex size-10 shrink-0 items-center justify-center rounded-lg font-display font-semibold text-white uppercase"
     >
-      {site.charAt(0)}
+      {name.charAt(0)}
     </span>
   );
 }
@@ -62,6 +63,7 @@ function EntryDetail({ entry, onEdit, onDelete }: {
 }) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
+  const { name, domain } = recognizeSite(entry.site);
 
   async function confirmDelete() {
     try {
@@ -75,9 +77,19 @@ function EntryDetail({ entry, onEdit, onDelete }: {
     <div className="mx-auto w-full max-w-xl p-4 sm:p-8">
       <div className="flex items-center gap-3">
         <Tile site={entry.site} />
-        <h2 className="min-w-0 flex-1 font-display text-2xl font-semibold tracking-tight break-words">
-          {entry.site}
-        </h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-2xl font-semibold tracking-tight break-words">{name}</h2>
+          {domain && (
+            <a
+              href={`https://${domain}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink hover:underline"
+            >
+              {domain} <ExternalLink size={13} aria-hidden />
+            </a>
+          )}
+        </div>
       </div>
       <dl className="mt-6 rounded-xl border border-line bg-surface px-4">
         <Row label="Utilizador" value={entry.username} />
@@ -122,6 +134,8 @@ export function VaultView({ userId, vaultKey, onLock, onSignOut }: {
   const [query, setQuery] = useState("");
   const [pane, setPane] = useState<Pane>({ kind: "empty" });
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [toast, setToast] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
@@ -151,15 +165,47 @@ export function VaultView({ userId, vaultKey, onLock, onSignOut }: {
     };
   }, [onLock]);
 
-  const visible = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    return (entries ?? [])
-      .filter(({ site, username }) => `${site} ${username}`.toLowerCase().includes(term))
-      .sort((a, b) => a.site.localeCompare(b.site, "pt"));
-  }, [entries, query]);
+  const visible = useMemo(
+    () =>
+      (entries ?? [])
+        .filter((entry) => matchesQuery(entry, query))
+        .sort((a, b) =>
+          recognizeSite(a.site).name.localeCompare(recognizeSite(b.site).name, "pt"),
+        ),
+    [entries, query],
+  );
 
   const selectedId = pane.kind === "empty" ? null : pane.id;
   const selected = entries?.find((entry) => entry.id === selectedId) ?? null;
+
+  const quickCopy = useCallback(async (entry: Entry, field: "username" | "password") => {
+    const what = field === "username" ? "Utilizador" : "Password";
+    const site = recognizeSite(entry.site).name;
+    let message = `${what} de ${site} copiado. Limpa em 30 s.`;
+    try {
+      await copySecret(entry[field]);
+    } catch {
+      message = "O browser não permitiu copiar.";
+    }
+    setToast(message);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), TOAST_MS);
+  }, []);
+
+  // With nothing open, the shortcuts act on the first search result.
+  const shortcutTarget = pane.kind === "edit" ? null : (selected ?? (query.trim() ? visible[0] : null));
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!event.altKey || event.ctrlKey || event.metaKey || !shortcutTarget) return;
+      const field = event.code === "KeyU" ? "username" : event.code === "KeyP" ? "password" : null;
+      if (!field) return;
+      event.preventDefault();
+      void quickCopy(shortcutTarget, field);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [shortcutTarget, quickCopy]);
 
   async function save(data: EntryData) {
     const entry: Entry = { ...data, id: selected?.id ?? crypto.randomUUID() };
@@ -202,7 +248,7 @@ export function VaultView({ userId, vaultKey, onLock, onSignOut }: {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Procurar"
+                placeholder="Procurar por site ou utilizador"
                 aria-label="Procurar por site ou utilizador"
                 className={`${inputClass} pl-9`}
               />
@@ -218,18 +264,23 @@ export function VaultView({ userId, vaultKey, onLock, onSignOut }: {
           )}
           <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
             {visible.map((entry) => (
-              <li key={entry.id}>
+              <li
+                key={entry.id}
+                className={`flex items-center rounded-lg pr-1 transition-colors hover:bg-raised ${entry.id === selectedId ? "bg-raised" : ""}`}
+              >
                 <button
                   onClick={() => setPane({ kind: "detail", id: entry.id })}
                   aria-current={entry.id === selectedId}
-                  className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-raised ${entry.id === selectedId ? "bg-raised" : ""}`}
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-lg p-2 text-left"
                 >
                   <Tile site={entry.site} />
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">{entry.site}</span>
+                    <span className="block truncate font-medium">{recognizeSite(entry.site).name}</span>
                     <span className="block truncate text-sm text-muted">{entry.username}</span>
                   </span>
                 </button>
+                <CopyButton value={entry.username} label="Copiar utilizador" icon={<UserRound size={16} />} />
+                <CopyButton value={entry.password} label="Copiar password" icon={<KeyRound size={16} />} />
               </li>
             ))}
           </ul>
@@ -241,6 +292,9 @@ export function VaultView({ userId, vaultKey, onLock, onSignOut }: {
           {entries && entries.length > 0 && visible.length === 0 && (
             <p className="px-6 pb-16 text-center text-sm text-muted">Sem resultados para esta pesquisa.</p>
           )}
+          <p className="hidden border-t border-line px-4 py-2 text-xs text-muted md:block">
+            <kbd className="font-mono">Alt+U</kbd> copia o utilizador · <kbd className="font-mono">Alt+P</kbd> copia a password
+          </p>
         </aside>
 
         <main className={`min-w-0 flex-1 overflow-y-auto ${paneOpen ? "block" : "hidden md:block"}`}>
@@ -272,6 +326,12 @@ export function VaultView({ userId, vaultKey, onLock, onSignOut }: {
           )}
         </main>
       </div>
+
+      {toast && (
+        <div role="status" className="fixed bottom-4 left-1/2 z-20 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg bg-ink px-4 py-2.5 text-sm text-canvas">
+          {toast}
+        </div>
+      )}
 
       {generatorOpen && (
         <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/50 p-4">

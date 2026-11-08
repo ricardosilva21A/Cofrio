@@ -2,6 +2,7 @@
 
 import { Wand2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { KNOWN_SITES, canonicalSite, recognizeSite } from "@/lib/sites";
 import type { Entry, EntryData } from "@/lib/vault-api";
 import { PasswordGenerator } from "./PasswordGenerator";
 import { ErrorText, Field, SecretInput, inputClass, primaryButton, secondaryButton } from "./ui";
@@ -21,12 +22,18 @@ export function EntryEditor({ entry, onSave, onCancel }: {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const recognized = recognizeSite(data.site);
+  let siteHint = "";
+  if (recognized.known) siteHint = `Reconhecido: ${recognized.name} · ${recognized.domain}`;
+  else if (recognized.domain) siteHint = `Website: ${recognized.domain}`;
+  else if (data.site.trim()) siteHint = "Será guardado como aplicação, sem website associado.";
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      await onSave({ ...data, site: data.site.trim(), username: data.username.trim() });
+      await onSave({ ...data, site: canonicalSite(data.site), username: data.username.trim() });
     } catch {
       setError("Não foi possível guardar. Verifica a ligação e tenta novamente.");
       setBusy(false);
@@ -44,9 +51,17 @@ export function EntryEditor({ entry, onSave, onCancel }: {
           autoFocus
           value={data.site}
           onChange={(event) => setData({ ...data, site: event.target.value })}
-          placeholder="github.com"
+          placeholder="Nome ou link, por exemplo GitHub"
+          list="known-sites"
+          autoComplete="off"
           className={inputClass}
         />
+        <datalist id="known-sites">
+          {KNOWN_SITES.map((site) => (
+            <option key={site.domain} value={site.name} />
+          ))}
+        </datalist>
+        {siteHint && <p className="mt-1.5 text-sm text-muted">{siteHint}</p>}
       </Field>
       <Field label="Utilizador">
         <input

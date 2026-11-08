@@ -156,6 +156,18 @@ export async function unlockWithMaster(masterPassword: string, record: VaultReco
   return importAesKey(await openWithMaster(masterPassword, record));
 }
 
+/**
+ * For the browser extension, whose popup is destroyed every time it closes.
+ * The result is the decrypted vault key: keep it only in memory-backed storage.
+ */
+export async function unlockToRawKey(masterPassword: string, record: VaultRecord) {
+  return toBase64(await openWithMaster(masterPassword, record));
+}
+
+export function importVaultKey(rawKey: string) {
+  return importAesKey(fromBase64(rawKey));
+}
+
 /** Rejects if the recovery key is wrong. */
 export async function unlockWithRecovery(recoveryKey: string, record: VaultRecord) {
   return importAesKey(await openWithRecovery(recoveryKey, record));

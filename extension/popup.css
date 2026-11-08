@@ -1,0 +1,76 @@
+:root {
+  color-scheme: light dark;
+  --canvas: #f4f1ea;
+  --surface: #fffdf8;
+  --raised: #ebe7dd;
+  --ink: #1d1c19;
+  --muted: #6b675d;
+  --line: #dcd7ca;
+  --accent: #17695a;
+  --on-accent: #fbfaf5;
+  --danger: #b3382c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #121412;
+    --surface: #1a1d1a;
+    --raised: #252925;
+    --ink: #eeece4;
+    --muted: #a09d92;
+    --line: #2f342f;
+    --accent: #5ec8ae;
+    --on-accent: #0c1f1a;
+    --danger: #f0897c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 360px;
+  min-height: 200px;
+  max-height: 560px;
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 700; font-size: 15px; }
+.form { display: grid; gap: 10px; padding: 14px 12px; }
+.form h1 { margin: 0; font-size: 18px; }
+.muted { margin: 0; color: var(--muted); font-size: 13px; }
+.error { margin: 0; color: var(--danger); font-size: 13px; }
+
+input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.primary { padding: 8px 12px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.small { padding: 5px 9px; font-size: 12px; }
+.ghost { padding: 5px 8px; border-radius: 6px; color: var(--muted); font-size: 12px; }
+.ghost:hover { background: var(--raised); color: var(--ink); }
+
+.search { padding: 10px 12px 4px; }
+.section { margin: 8px 12px 4px; color: var(--muted); font-size: 12px; font-weight: 600; }
+ul { list-style: none; margin: 0; padding: 0 6px 8px; max-height: 400px; overflow-y: auto; }
+li { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 8px; }
+li:hover { background: var(--raised); }
+.tile { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: #fff; font-weight: 700; text-transform: uppercase; }
+.info { flex: 1; min-width: 0; }
+.info span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.info .user { color: var(--muted); font-size: 12px; }
+.empty { margin: 14px 12px; color: var(--muted); text-align: center; font-size: 13px; }
+.status { margin: 0 12px 10px; color: var(--accent); font-size: 12px; min-height: 16px; }
